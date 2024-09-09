@@ -23,7 +23,7 @@ const shopify = new Shopify({
 app.get('/create/webhook', async (req, res) => {
   const webhook = await shopify.webhook.create({
     topic: 'checkouts/create',
-    address: `https://webhook.site/6823f143-b015-40de-9f1b-6b99010d9e03`,
+    address: `https://147.79.104.189:3000/webhooks/checkout`,
     format: 'json'
   });
   console.log(webhook)
@@ -39,13 +39,45 @@ app.get('/', async function (req, res) {
   });
 })
 
-app.get('/install', (req, res) => {
-  const shop = req.query.shop;
-  const redirectUri = `https://a023e7-17.myshopify.com/auth/callback`;
-  const installUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.APIKEYSHOPIFY}&scope=write_checkouts&redirect_uri=https://a023e7-17.myshopify.com/auth/callback`;
+// app.get('/install', (req, res) => {
+//   const shop = req.query.shop;
+//   const redirectUri = `https://a023e7-17.myshopify.com/auth/callback`;
+//   const installUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.APIKEYSHOPIFY}&scope=write_checkouts&redirect_uri=https://a023e7-17.myshopify.com/auth/callback`;
   
-  res.redirect(installUrl);
+//   res.redirect(installUrl);
+// });
+
+
+app.post('/webhooks/checkout', async (req, res) => {
+  const checkoutData = req.body;
+  
+  // Verifique se o checkout foi criado corretamente
+  if (checkoutData.id) {
+    const externalUrl = `https://147.79.104.189:3000/checkout?id=${checkoutData.id}`;
+
+    // Redireciona o cliente para o site externo
+    res.redirect(externalUrl);
+  } else {
+    res.status(400).send('Erro no Checkout');
+  }
 });
+
+
+app.get('/checkout', async (req, res) => {
+  try {
+    const checkoutId = req.query.id
+    // Faz a chamada para obter os detalhes do checkout
+    const checkout = await shopify.checkout.get(checkoutId);
+    
+    res.json(checkout)
+  } catch (error) {
+    console.error('Erro ao obter detalhes do checkout:', error);
+  }
+})
+
+app.get('/teste', (req, res) => {
+  res.send('ping')
+})
 
 
 app.listen(3000)
